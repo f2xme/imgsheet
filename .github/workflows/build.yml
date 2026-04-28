@@ -4,8 +4,13 @@ on:
   push:
     branches:
       - main
+    tags:
+      - "v*"
   pull_request:
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 env:
   CARGO_TERM_COLOR: always
@@ -23,10 +28,6 @@ jobs:
             target: x86_64-unknown-linux-gnu
             binary_name: imgsheet
             artifact_name: imgsheet-linux-x64
-          - os: macos-13
-            target: x86_64-apple-darwin
-            binary_name: imgsheet
-            artifact_name: imgsheet-macos-x64
           - os: macos-14
             target: aarch64-apple-darwin
             binary_name: imgsheet
@@ -58,9 +59,28 @@ jobs:
           if [ -f LICENSE ]; then
             cp LICENSE "dist/${{ matrix.artifact_name }}/"
           fi
+          tar -czf "dist/${{ matrix.artifact_name }}.tar.gz" -C dist "${{ matrix.artifact_name }}"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
-          path: dist/${{ matrix.artifact_name }}
+          path: dist/${{ matrix.artifact_name }}.tar.gz
+
+  release:
+    name: Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.tar.gz

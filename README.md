@@ -2,6 +2,8 @@
 
 `imgsheet` is a small CLI that combines a directory of slide images into one overview image.
 
+[中文文档](README.zh-CN.md)
+
 It is designed for programmatic use:
 
 - input must be a directory containing only supported image files
